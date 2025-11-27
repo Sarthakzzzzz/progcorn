@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Force light theme for now */
+:root { color-scheme: light; }
+
+body { @apply bg-white text-slate-900 antialiased; }
+
+/* layout helpers */
+main { @apply mt-4; }
+section { @apply mb-8; }
+
+/* links */
+a { @apply text-slate-900; }
+a:hover { @apply opacity-80; }
+
+/* form elements */
+input, textarea, select { @apply bg-white border border-slate-300 text-slate-900 placeholder-slate-400 rounded; }
+button { @apply select-none; }
+
+/* separators */
+hr { @apply border-slate-200; }

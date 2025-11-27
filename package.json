@@ -1,0 +1,53 @@
+{
+  "name": "prhub",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"next dev -p 3000\" \"tsx src/index.ts\"",
+    "dev:web": "next dev -p 3000",
+    "dev:api": "tsx src/index.ts",
+    "build": "prisma generate && next build",
+    "start": "NODE_ENV=production concurrently \"next start -p 3000\" \"node dist/server.js\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "5.19.1",
+    "bcrypt": "5.1.1",
+    "cors": "2.8.5",
+    "express": "4.19.2",
+    "helmet": "7.1.0",
+    "jsonwebtoken": "9.0.2",
+    "morgan": "1.10.0",
+    "next": "15.0.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "5.0.2",
+    "@types/cors": "2.8.17",
+    "@types/express": "4.17.21",
+    "@types/jsonwebtoken": "9.0.6",
+    "@types/morgan": "1.9.9",
+    "@types/node": "20.11.30",
+    "@types/react": "19.2.7",
+    "autoprefixer": "10.4.20",
+    "concurrently": "9.0.1",
+    "eslint": "8.57.0",
+    "eslint-config-next": "15.0.3",
+    "postcss": "8.4.47",
+    "prisma": "5.19.1",
+    "tailwindcss": "3.4.14",
+    "ts-node": "10.9.2",
+    "ts-node-dev": "2.0.0",
+    "tslib": "2.8.1",
+    "tsup": "8.3.0",
+    "tsx": "4.19.2",
+    "typescript": "5.6.3"
+  }
+}
