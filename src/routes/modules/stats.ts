@@ -49,11 +49,13 @@ router.get('/sidebar', async (_req, res) => {
     .sort((a: any, b: any) => b.count - a.count)
     .slice(0, 10)
 
-  // Announcements (static for now; can be moved to DB later)
-  const announcements = [
-    { id: 'a1', title: 'Welcome to PRHub', url: '#' },
-    { id: 'a2', title: 'Submit your favorite resources!', url: '/submit' },
-  ]
+  // Announcements from DB (published only)
+  const announcements = await prisma.announcement.findMany({
+    where: { published: true },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, title: true, url: true },
+    take: 5,
+  })
 
   res.json({ popularTags, categories, topAuthors: authors, announcements })
 })

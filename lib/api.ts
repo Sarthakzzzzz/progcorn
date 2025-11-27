@@ -9,10 +9,22 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     if (token) headers.set('Authorization', `Bearer ${token}`)
   }
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers, cache: 'no-store' })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err?.error || `Request failed: ${res.status}`)
+  const url = `${API_BASE}${path}`
+  // simple retry: 1 retry on network error
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, { ...options, headers, cache: 'no-store' })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        const msg = err?.error || `Request failed: ${res.status} at ${url}`
+        if (res.status === 404) throw new Error(`${msg}`)
+        throw new Error(msg)
+      }
+      return res.json()
+    } catch (e: any) {
+      if (attempt === 1) throw new Error(e?.message || 'Network error')
+      await new Promise((r) => setTimeout(r, 300))
+    }
   }
-  return res.json()
+  throw new Error('Network error')
 }

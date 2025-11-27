@@ -10,6 +10,7 @@ const resourceCreate = z.object({
   url: z.string().url(),
   description: z.string().min(10),
   categoryId: z.string(),
+  imageUrl: z.string().url().optional().or(z.literal('').transform(() => undefined)),
   tags: z.array(z.string()).default([])
 })
 
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
   ]
   if (categoryId) where.categoryId = String(categoryId)
   if (tag) where.tags = { some: { tag: { slug: String(tag) } } }
-  const orderBy = sort === 'newest' ? { createdAt: 'desc' } : { upvotes: { _count: 'desc' } }
+  const orderBy: any = sort === 'newest' ? { createdAt: 'desc' } : { upvotes: { _count: 'desc' } }
   const resources = await prisma.resource.findMany({
     where,
     orderBy,
@@ -31,10 +32,16 @@ router.get('/', async (req, res) => {
   res.json({ resources })
 })
 
-router.get('/:id', async (req, res) => {
-  const resource = await prisma.resource.findUnique({ where: { id: req.params.id }, include: { category: true, tags: { include: { tag: true } } } })
-  if (!resource) return res.status(404).json({ error: 'Not found' })
-  res.json({ resource })
+router.get('/:id', async (req: any, res) => {
+  const r = await prisma.resource.findUnique({ where: { id: req.params.id }, include: { category: true, tags: { include: { tag: true } }, _count: { select: { upvotes: true, comments: true } } } })
+  if (!r || r.deletedAt) return res.status(404).json({ error: 'Not found' })
+  // Check user upvote status if auth
+  let userUpvoted = false
+  if (req.user?.id) {
+    const up = await prisma.upvote.findFirst({ where: { resourceId: r.id, userId: req.user.id } })
+    userUpvoted = !!up
+  }
+  res.json({ resource: r, userUpvoted })
 })
 
 router.post('/', requireAuth, async (req: any, res, next) => {
@@ -47,6 +54,8 @@ router.post('/', requireAuth, async (req: any, res, next) => {
         description: data.description,
         authorId: req.user.id,
         categoryId: data.categoryId,
+        // imageUrl is added in a later migration; cast to any to avoid type issues pre-migrate
+        ...(data.imageUrl ? ({ imageUrl: data.imageUrl } as any) : {}),
         status: 'PENDING',
         tags: { create: data.tags.map((t) => ({ tag: { connect: { id: t } } })) }
       }
@@ -58,7 +67,7 @@ router.post('/', requireAuth, async (req: any, res, next) => {
 router.put('/:id', requireAuth, async (req: any, res, next) => {
   try {
     const data = resourceCreate.partial().parse(req.body)
-    const updated = await prisma.resource.update({ where: { id: req.params.id, }, data })
+    const updated = await prisma.resource.update({ where: { id: req.params.id }, data: data as any })
     res.json({ resource: updated })
   } catch (e) { next(e) }
 })
@@ -68,14 +77,21 @@ router.delete('/:id', requireAuth, async (req: any, res) => {
   res.json({ ok: true })
 })
 
-router.post('/:id/upvote', requireAuth, async (req: any, res) => {
-  await prisma.upvote.create({ data: { resourceId: req.params.id, userId: req.user.id } })
-  res.status(201).json({ ok: true })
-})
-
-router.delete('/:id/upvote', requireAuth, async (req: any, res) => {
-  await prisma.upvote.delete({ where: { userId_resourceId: { userId: req.user.id, resourceId: req.params.id } } })
-  res.json({ ok: true })
+// Toggle upvote: if exists -> remove; else -> create
+router.post('/:id/upvote', requireAuth, async (req: any, res, next) => {
+  try {
+    const where = { resourceId: req.params.id, userId: req.user.id }
+    const existing = await prisma.upvote.findFirst({ where })
+    if (existing) {
+      await prisma.upvote.deleteMany({ where })
+      const c = await prisma.upvote.count({ where: { resourceId: req.params.id } })
+      return res.json({ upvoted: false, count: c })
+    } else {
+      await prisma.upvote.create({ data: where })
+      const c = await prisma.upvote.count({ where: { resourceId: req.params.id } })
+      return res.json({ upvoted: true, count: c })
+    }
+  } catch (e) { next(e) }
 })
 
 router.get('/:id/comments', async (req, res) => {

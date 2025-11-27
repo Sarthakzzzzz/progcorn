@@ -55,6 +55,7 @@ model Resource {
   title       String
   url         String
   description String
+  imageUrl    String?
   authorId    String
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categoryId  String
@@ -165,6 +166,15 @@ model AdminAction {
   meta      Json?
   createdAt DateTime @default(now())
   admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  url       String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Full text search support using tsvector stored via a view or computed field can be added via raw SQL migrations if needed.

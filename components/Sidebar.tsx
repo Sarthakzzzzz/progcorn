@@ -12,7 +12,7 @@ type SidebarData = {
   popularTags: PopularTag[]
   categories: Category[]
   topAuthors: Author[]
-  announcements: { id: string; title: string; url: string }[]
+  announcements: { id: string; title: string; url: string | null }[]
 }
 
 export default function Sidebar() {
@@ -48,7 +48,13 @@ export default function Sidebar() {
         <CardBody>
           <ul className="space-y-2 text-sm">
             {data.announcements.map(a => (
-              <li key={a.id}><Link className="underline" href={a.url}>{a.title}</Link></li>
+              <li key={a.id}>
+                {a.url ? (
+                  <Link className="underline" href={a.url}>{a.title}</Link>
+                ) : (
+                  <span>{a.title}</span>
+                )}
+              </li>
             ))}
           </ul>
         </CardBody>
