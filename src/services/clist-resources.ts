@@ -34,11 +34,13 @@ export async function fetchAndUpsertClistResources({ limit = 100 } = {}) {
       const short = item.short || null
       const nAccounts = parseIntOrNull(item.n_accounts)
       const nContests = parseIntOrNull(item.n_contests)
+      let icon: string | null = item.icon || null
+      if (icon && icon.startsWith('/')) icon = `https://clist.by${icon}`
 
       await prisma.platform.upsert({
         where: { externalId },
-        create: { externalId, name, short, nAccounts, nContests },
-        update: { name, short, nAccounts, nContests }
+        create: { externalId, name, short, nAccounts, nContests, icon },
+        update: { name, short, nAccounts, nContests, icon }
       })
       upserted++
     }

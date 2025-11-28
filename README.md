@@ -10,6 +10,11 @@ A production-ready platform to discover, share, upvote, comment on, and organize
 - Search with filters and sorting
 - Admin moderation: delete, view reports, logs
 
+- Contests & Platforms (Clist integration)
+	- Import contests and platforms from Clist (https://clist.by) into the app
+	- Browse contests and platforms from the frontend (new pages under `/contests` and `/platforms`)
+	- Platform listing supports sorting by `contests|accounts|name` via query params
+
 ## Tech Stack
 - Frontend: Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui (optional components)
 - Backend: Node.js, Express, PostgreSQL, Prisma, Zod, JWT, bcrypt
@@ -24,6 +29,13 @@ A production-ready platform to discover, share, upvote, comment on, and organize
 ## Environment
 Copy `.env.example` to `.env` and set values.
 
+New environment variables for Clist integration:
+```
+CLIST_USERNAME=your_clist_username
+CLIST_API_KEY=your_clist_api_key
+CLIST_DISABLE_SCHEDULER=false
+```
+
 ## Install & Run Locally
 ```bash
 npm install
@@ -34,6 +46,11 @@ npm run dev
 ```
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000
+
+Notes for Clist integration:
+- If you set `CLIST_USERNAME` and `CLIST_API_KEY` in `.env`, the backend will perform an initial import of contests and platforms on server start.
+- You can manually refresh data using the admin endpoints (requires admin credentials): `POST /contests/refresh` and `POST /platforms/refresh`.
+- The backend schedules hourly refreshes with node-cron by default; set `CLIST_DISABLE_SCHEDULER=true` to disable scheduled refreshes in development.
 
 ## API (REST)
 Auth
@@ -74,6 +91,13 @@ Admin
 - GET /admin/resources (admin)
 - DELETE /admin/resource/:id (admin)
 - GET /admin/reports (admin)
+
+Contests & Platforms (Clist)
+- GET /contests
+- GET /contests/:id
+- POST /contests/refresh (admin)
+- GET /platforms?sort=contests|accounts|name&order=asc|desc
+- POST /platforms/refresh (admin)
 
 ## Database Schema
 See `prisma/schema.prisma` for tables: users, resources, tags, resource_tags, upvotes, comments, collections, collection_items, categories, reports, admin_actions.
