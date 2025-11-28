@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
   ]
   if (category) where.category = { slug: String(category) }
   if (tag) where.tags = { some: { tag: { slug: String(tag) } } }
-  const orderBy = sort === 'newest' ? { createdAt: 'desc' } : { upvotes: { _count: 'desc' } }
+  const orderBy: any = sort === 'newest' ? { createdAt: 'desc' } : { upvotes: { _count: 'desc' } }
   const results = await prisma.resource.findMany({ where, orderBy, include: { category: true, tags: { include: { tag: true } }, _count: { select: { upvotes: true, comments: true } } } })
   res.json({ results })
 })

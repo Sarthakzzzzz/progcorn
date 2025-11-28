@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -15,7 +14,7 @@ model User {
   passwordHash String
   bio          String?
   imageUrl     String?
-  role         Role     @default(USER)
+  role         String   @default("USER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -27,10 +26,7 @@ model User {
   reports      Report[]
 }
 
-enum Role {
-  USER
-  ADMIN
-}
+
 
 model Category {
   id        String     @id @default(cuid())
@@ -60,7 +56,7 @@ model Resource {
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
-  status      ResourceStatus @default(PENDING)
+  status      String @default("PENDING")
   approvedAt  DateTime?
   approvedBy  String?
   createdAt   DateTime  @default(now())
@@ -78,11 +74,7 @@ model Resource {
   @@index([status])
 }
 
-enum ResourceStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
+
 
 model ResourceTag {
   resourceId String
@@ -146,24 +138,20 @@ model Report {
   reason     String
   userId     String
   resourceId String
-  status     ReportStatus @default(PENDING)
+  status     String @default("PENDING")
   createdAt  DateTime     @default(now())
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   resource   Resource     @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 }
 
-enum ReportStatus {
-  PENDING
-  REVIEWED
-  DISMISSED
-}
+
 
 model AdminAction {
   id        String   @id @default(cuid())
   adminId   String
   action    String
   targetId  String?
-  meta      Json?
+  meta      String?
   createdAt DateTime @default(now())
   admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }
@@ -177,4 +165,36 @@ model Announcement {
   updatedAt DateTime @updatedAt
 }
 
-// Full text search support using tsvector stored via a view or computed field can be added via raw SQL migrations if needed.
+model Contest {
+  id          String   @id @default(cuid())
+  externalId  Int      @unique
+  name        String
+  url         String?
+  platform    String?  
+  resourceId  Int?      
+  host        String?
+  startAt     DateTime
+  endAt       DateTime?
+  duration    Int?      
+  nProblems   Int?
+  nStatistics Int?
+  parsedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([startAt])
+}
+model Platform {
+  id         String   @id @default(cuid())
+  externalId Int      @unique
+  name       String
+  icon       String?
+  short      String?
+  nAccounts  Int?
+  nContests  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([nContests])
+  @@index([nAccounts])
+}

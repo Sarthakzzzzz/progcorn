@@ -7,10 +7,12 @@ export default function Navbar() {
   const { user, logout, loading } = useAuth()
   return (
     <header className="mb-6 flex items-center justify-between">
-      <Link href="/" className="text-xl font-semibold tracking-tight">PRHub</Link>
+      <Link href="/" className="text-xl font-semibold tracking-tight">ProgCorn</Link>
       <nav className="flex gap-2 text-sm items-center">
         <Link href="/search"><Button variant="ghost">Search</Button></Link>
         <Link href="/collections"><Button variant="ghost">Collections</Button></Link>
+        <Link href="/contests"><Button variant="ghost">Contests</Button></Link>
+        <Link href="/platforms"><Button variant="ghost">Platforms</Button></Link>
         {user?.role === 'ADMIN' && (
           <Link href="/admin"><Button variant="ghost">Admin</Button></Link>
         )}

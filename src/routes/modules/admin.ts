@@ -141,13 +141,13 @@ router.post(['/resources/bulk','/resource/bulk'], async (req, res) => {
   if (!['APPROVE','REJECT','DELETE'].includes(String(action))) return res.status(400).json({ error: 'invalid action' })
   if (action === 'DELETE') {
     await prisma.resource.updateMany({ where: { id: { in: ids } }, data: { deletedAt: new Date() } })
-    await prisma.adminAction.create({ data: { adminId: (req as any).user.id, action: 'BULK_DELETE_RESOURCE', meta: { ids } } })
+    await prisma.adminAction.create({ data: { adminId: (req as any).user.id, action: 'BULK_DELETE_RESOURCE', meta: JSON.stringify({ ids }) } })
   } else if (action === 'APPROVE') {
     await prisma.resource.updateMany({ where: { id: { in: ids } }, data: { status: 'APPROVED', approvedAt: new Date(), approvedBy: (req as any).user.id } })
-    await prisma.adminAction.create({ data: { adminId: (req as any).user.id, action: 'BULK_APPROVE_RESOURCE', meta: { ids } } })
+    await prisma.adminAction.create({ data: { adminId: (req as any).user.id, action: 'BULK_APPROVE_RESOURCE', meta: JSON.stringify({ ids }) } })
   } else if (action === 'REJECT') {
     await prisma.resource.updateMany({ where: { id: { in: ids } }, data: { status: 'REJECTED', approvedAt: null, approvedBy: (req as any).user.id } })
-    await prisma.adminAction.create({ data: { adminId: (req as any).user.id, action: 'BULK_REJECT_RESOURCE', meta: { ids } } })
+    await prisma.adminAction.create({ data: { adminId: (req as any).user.id, action: 'BULK_REJECT_RESOURCE', meta: JSON.stringify({ ids }) } })
   }
   res.json({ ok: true })
 })

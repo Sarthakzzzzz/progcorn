@@ -2,9 +2,8 @@ import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
-
 async function main() {
-  const passwordHash = await bcrypt.hash('Password123!', 10)
+  const passwordHash = await bcrypt.hash('password123!', 10)
   const [admin, user] = await Promise.all([
     prisma.user.upsert({
       where: { email: 'admin@prhub.dev' },
@@ -77,4 +76,114 @@ main().catch((e) => {
   process.exit(1)
 }).finally(async () => {
   await prisma.$disconnect()
+})
+
+// Add example platforms & contests
+async function seedPlatformsAndContests() {
+  // Upsert a few example platforms
+  const platforms = await prisma.$transaction([
+    prisma.platform.upsert({ where: { externalId: 1 }, update: { name: 'codeforces.com' }, create: { externalId: 1, name: 'codeforces.com', icon: 'https://clist.by/media/sizes/64x64/img/resources/codeforces_com.png', short: 'Codeforces', nAccounts: 10_000_000, nContests: 800 } }),
+    prisma.platform.upsert({ where: { externalId: 2 }, update: { name: 'leetcode.com' }, create: { externalId: 2, name: 'leetcode.com', icon: 'https://clist.by/media/sizes/64x64/img/resources/leetcode_com.png', short: 'LeetCode', nAccounts: 25000000, nContests: 400 } }),
+    prisma.platform.upsert({ where: { externalId: 3 }, update: { name: 'atcoder.jp' }, create: { externalId: 3, name: 'atcoder.jp', icon: 'https://clist.by/media/sizes/64x64/img/resources/atcoder_jp.png', short: 'AtCoder', nAccounts: 2000000, nContests: 1200 } }),
+  ])
+
+  // Create a few contests for these platforms (externalId must be unique integers)
+  const now = new Date()
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+  await prisma.contest.upsert({
+    where: { externalId: 1001 },
+    update: {
+      name: 'CF Round – Example',
+      url: 'https://codeforces.com/contest/1001',
+      platform: 'codeforces.com',
+      startAt: tomorrow,
+      endAt: new Date(tomorrow.getTime() + 3 * 60 * 60 * 1000),
+      duration: 3 * 60 * 60,
+      nProblems: 6,
+      nStatistics: 1200,
+      parsedAt: now,
+    },
+    create: {
+      externalId: 1001,
+      name: 'CF Round – Example',
+      url: 'https://codeforces.com/contest/1001',
+      platform: 'codeforces.com',
+      startAt: tomorrow,
+      endAt: new Date(tomorrow.getTime() + 3 * 60 * 60 * 1000),
+      duration: 3 * 60 * 60,
+      nProblems: 6,
+      nStatistics: 1200,
+      parsedAt: now,
+    }
+  })
+
+  await prisma.contest.upsert({
+    where: { externalId: 1002 },
+    update: {
+      name: 'LeetCode Weekly - Example',
+      url: 'https://leetcode.com/contest/1002',
+      platform: 'leetcode.com',
+      startAt: nextWeek,
+      endAt: new Date(nextWeek.getTime() + 2 * 60 * 60 * 1000),
+      duration: 2 * 60 * 60,
+      nProblems: 4,
+      nStatistics: 800,
+      parsedAt: now,
+    },
+    create: {
+      externalId: 1002,
+      name: 'LeetCode Weekly - Example',
+      url: 'https://leetcode.com/contest/1002',
+      platform: 'leetcode.com',
+      startAt: nextWeek,
+      endAt: new Date(nextWeek.getTime() + 2 * 60 * 60 * 1000),
+      duration: 2 * 60 * 60,
+      nProblems: 4,
+      nStatistics: 800,
+      parsedAt: now,
+    }
+  })
+
+  await prisma.contest.upsert({
+    where: { externalId: 1003 },
+    update: {
+      name: 'AtCoder Beginner – Example',
+      url: 'https://atcoder.jp/contests/1003',
+      platform: 'atcoder.jp',
+      startAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+      endAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      duration: 2 * 60 * 60,
+      nProblems: 4,
+      nStatistics: 600,
+      parsedAt: now,
+    },
+    create: {
+      externalId: 1003,
+      name: 'AtCoder Beginner – Example',
+      url: 'https://atcoder.jp/contests/1003',
+      platform: 'atcoder.jp',
+      startAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+      endAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      duration: 2 * 60 * 60,
+      nProblems: 4,
+      nStatistics: 600,
+      parsedAt: now,
+    }
+  })
+
+  console.log('Sample platforms and contests seeded')
+}
+
+// run the extra seeding logic after the original seed completes
+main().then(async () => {
+  try {
+    await seedPlatformsAndContests()
+  } catch (err) {
+    console.warn('Extra seed failed:', err)
+  } finally {
+    await prisma.$disconnect()
+    process.exit(0)
+  }
 })

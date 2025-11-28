@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 
 export const metadata = {
-  title: 'PRHub',
+  title: 'ProgCorn',
   description: 'Programming Resources Hub',
 }
 
@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <main className="lg:col-span-2">{children}</main>
               <aside className="lg:col-span-1"><Sidebar /></aside>
             </div>
-            <footer className="mt-8 border-t pt-6 text-sm text-gray-500">© {new Date().getFullYear()} PRHub</footer>
+            <footer className="mt-8 border-t pt-6 text-sm text-gray-500">© {new Date().getFullYear()} ProgCorn</footer>
           </div>
         </Providers>
       </body>

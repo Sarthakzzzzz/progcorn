@@ -7,7 +7,8 @@ import collections from './modules/collections'
 import admin from './modules/admin'
 import search from './modules/search'
 import stats from './modules/stats'
-
+import platforms from './modules/platforms'
+import contests from './modules/contests'
 export const router = Router()
 
 router.use('/auth', auth)
@@ -18,3 +19,5 @@ router.use('/collections', collections)
 router.use('/admin', admin)
 router.use('/search', search)
 router.use('/stats', stats)
+router.use('/contests', contests)
+router.use('/platforms', platforms)
