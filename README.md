@@ -1,125 +1,276 @@
-# PRHub (Programming Resources Hub)
+# ProgCorn - Programming Resources Hub
 
-A production-ready platform to discover, share, upvote, comment on, and organize programming resources.
+A full-stack web platform for discovering programming resources and tracking competitive programming contests with real-time data integration.
 
-## Features
-- Submit resources with title, URL, description, category, and tags
-- Upvote, comment, report, and save resources
-- Create collections
-- Browse by tags and categories
-- Search with filters and sorting
-- Admin moderation: delete, view reports, logs
+## ✨ Features
 
-- Contests & Platforms (Clist integration)
-	- Import contests and platforms from Clist (https://clist.by) into the app
-	- Browse contests and platforms from the frontend (new pages under `/contests` and `/platforms`)
-	- Platform listing supports sorting by `contests|accounts|name` via query params
+### 📚 Resource Management
+- Submit and curate programming resources with categories and tags
+- Upvote, comment, and report system for community moderation
+- Personal collections to organize favorite resources
+- Advanced search with filters and sorting options
 
-## Tech Stack
-- Frontend: Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui (optional components)
-- Backend: Node.js, Express, PostgreSQL, Prisma, Zod, JWT, bcrypt
-- Deployment: Vercel (frontend), Render/Railway (backend), Managed PostgreSQL
+### 🏆 Contest Integration
+- Real-time contest data from 50+ platforms via Clist API
+- Automated hourly synchronization with node-cron
+- Platform statistics and contest tracking
+- Upcoming and live contest notifications
 
-## Monorepo Structure
-- app/ — Next.js app (App Router)
-- src/ — Express server
-- prisma/ — Prisma schema and seed
-- styles/ — Tailwind globals
+### 👥 User System
+- JWT-based authentication with bcrypt password hashing
+- Role-based access control (USER/ADMIN)
+- User profiles and activity tracking
+- Admin dashboard for content moderation
 
-## Environment
-Copy `.env.example` to `.env` and set values.
+### 🔍 Advanced Features
+- Full-text search across resources and contests
+- Tag-based filtering and categorization
+- Statistics dashboard with platform insights
+- Responsive design for all devices
 
-New environment variables for Clist integration:
+## 🛠 Tech Stack
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
+- **Backend**: Express.js, Node.js with TypeScript
+- **Database**: SQLite with Prisma ORM
+- **Authentication**: JWT tokens, bcrypt hashing
+- **External APIs**: Clist API for contest data
+- **Scheduling**: node-cron for automated tasks
+- **Security**: Helmet, CORS, input validation with Zod
+
+## 📁 Project Structure
 ```
+progcorn/
+├── app/                    # Next.js App Router pages
+│   ├── admin/             # Admin dashboard
+│   ├── collections/       # User collections
+│   ├── contests/          # Contest listings
+│   ├── login/             # Authentication
+│   └── resources/         # Resource management
+├── components/            # Reusable React components
+│   ├── ui/               # Base UI components
+│   └── *.tsx             # Feature components
+├── src/                   # Express.js backend
+│   ├── middleware/        # Auth, validation, error handling
+│   ├── routes/modules/    # API route handlers
+│   ├── services/          # External API integrations
+│   └── index.ts          # Server entry point
+├── prisma/               # Database schema and migrations
+│   ├── schema.prisma     # Database models
+│   └── seed.ts           # Sample data
+├── lib/                  # Shared utilities
+└── styles/               # Global CSS
+```
+
+## ⚙️ Environment Setup
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+# Frontend
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+
+# Backend
+PORT=4000
+JWT_SECRET=your_secure_jwt_secret
+
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Clist API Integration (Optional)
 CLIST_USERNAME=your_clist_username
 CLIST_API_KEY=your_clist_api_key
 CLIST_DISABLE_SCHEDULER=false
 ```
 
-## Install & Run Locally
+## 🚀 Quick Start
+
+1. **Install dependencies**
 ```bash
 npm install
+```
+
+2. **Setup database**
+```bash
 npx prisma generate
-npx prisma migrate dev --name init
+npx prisma db push
 npm run seed
+```
+
+3. **Start development servers**
+```bash
 npm run dev
 ```
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:4000
 
-Notes for Clist integration:
-- If you set `CLIST_USERNAME` and `CLIST_API_KEY` in `.env`, the backend will perform an initial import of contests and platforms on server start.
-- You can manually refresh data using the admin endpoints (requires admin credentials): `POST /contests/refresh` and `POST /platforms/refresh`.
-- The backend schedules hourly refreshes with node-cron by default; set `CLIST_DISABLE_SCHEDULER=true` to disable scheduled refreshes in development.
+**Access the application:**
+- 🌐 Frontend: http://localhost:3000
+- 🔌 Backend API: http://localhost:4000
+- 📊 Health Check: http://localhost:4000/health
 
-## API (REST)
-Auth
-- POST /auth/register { username, email, password }
-- POST /auth/login { email, password }
-- GET /auth/me (Bearer token)
+**Default credentials:**
+- Admin: `admin@prhub.dev` / `password123!`
+- User: `user@prhub.dev` / `password123!`
 
-Resources
-- GET /resources?q=&tag=&categoryId=&sort=newest|popular
-- GET /resources/:id
-- POST /resources (auth) { title, url, description, categoryId, tags: [tagId] }
-- PUT /resources/:id (auth)
-- DELETE /resources/:id (auth, soft delete)
-- POST /resources/:id/upvote (auth)
-- DELETE /resources/:id/upvote (auth)
-- GET /resources/:id/comments
-- POST /resources/:id/comments (auth) { content }
-- POST /resources/:id/report (auth) { reason }
+### Clist Integration Notes
+- Automatic contest/platform import on server start (if credentials provided)
+- Hourly data synchronization via node-cron
+- Manual refresh endpoints available for admins
+- Set `CLIST_DISABLE_SCHEDULER=true` to disable auto-sync in development
 
-Search
-- GET /search?query=&tag=&category=&sort=newest|popular
+## 🔌 API Endpoints
 
-Tags
-- GET /tags
-- GET /tags/:name
+### Authentication
+```
+POST   /auth/register     # User registration
+POST   /auth/login        # User login
+GET    /auth/me           # Get current user (Bearer token)
+```
 
-Categories
-- GET /categories
-- GET /categories/:name
+### Resources
+```
+GET    /resources         # List resources (q, tag, categoryId, sort)
+GET    /resources/:id     # Get single resource
+POST   /resources         # Create resource (auth)
+PUT    /resources/:id     # Update resource (auth)
+DELETE /resources/:id     # Soft delete resource (auth)
+POST   /resources/:id/upvote    # Toggle upvote (auth)
+GET    /resources/:id/comments  # Get comments
+POST   /resources/:id/comments  # Add comment (auth)
+POST   /resources/:id/report    # Report resource (auth)
+```
 
-Collections
-- GET /collections (auth)
-- POST /collections (auth) { name, description? }
-- GET /collections/:id (auth)
-- POST /collections/:id/add/:resourceId (auth)
+### Search & Discovery
+```
+GET    /search           # Advanced search (query, tag, category, sort)
+GET    /tags             # List all tags
+GET    /tags/:name       # Get tag by name
+GET    /categories       # List all categories
+GET    /categories/:name # Get category by name
+GET    /stats            # Platform statistics
+```
 
-Admin
-- GET /admin/resources (admin)
-- DELETE /admin/resource/:id (admin)
-- GET /admin/reports (admin)
+### Collections
+```
+GET    /collections      # User collections (auth)
+POST   /collections      # Create collection (auth)
+GET    /collections/:id  # Get collection (auth)
+POST   /collections/:id/add/:resourceId  # Add to collection (auth)
+```
 
-Contests & Platforms (Clist)
-- GET /contests
-- GET /contests/:id
-- POST /contests/refresh (admin)
-- GET /platforms?sort=contests|accounts|name&order=asc|desc
-- POST /platforms/refresh (admin)
+### Contests & Platforms
+```
+GET    /contests         # List contests
+GET    /contests/:id     # Get contest details
+POST   /contests/refresh # Refresh contest data (admin)
+GET    /platforms        # List platforms (sort: contests|accounts|name)
+POST   /platforms/refresh # Refresh platform data (admin)
+```
 
-## Database Schema
-See `prisma/schema.prisma` for tables: users, resources, tags, resource_tags, upvotes, comments, collections, collection_items, categories, reports, admin_actions.
+### Admin
+```
+GET    /admin/resources  # Moderate resources (admin)
+DELETE /admin/resource/:id # Delete resource (admin)
+GET    /admin/reports    # View reports (admin)
+```
 
-## Search
-Default implementation uses Prisma `contains`. Production: enable PostgreSQL `tsvector` + GIN and switch to raw SQL where clauses.
+## 🗄️ Database Schema
 
-## Deployment
-Frontend (Vercel)
-- Import repo, set NEXT_PUBLIC_API_BASE_URL to backend URL
-- Build: `npm run build` (Next.js)
+**Core Models:**
+- `User` - Authentication and profiles
+- `Resource` - Programming resources with metadata
+- `Category` - Resource categorization
+- `Tag` - Flexible tagging system
+- `Comment` - User discussions
+- `Upvote` - Community voting
+- `Collection` - User-curated lists
+- `Report` - Content moderation
 
-Backend (Render/Railway)
-- Create service from repo
-- Env: PORT=4000, DATABASE_URL, DIRECT_URL, JWT_SECRET
-- Start command: `tsx src/index.ts` (or `node dist/server.js` if built)
-- Run migrations: `npx prisma migrate deploy`
-- Seed (optional): `npm run seed`
+**Contest Models:**
+- `Contest` - Programming contests from Clist API
+- `Platform` - Contest platforms (Codeforces, LeetCode, etc.)
 
-Database
-- Provision managed PostgreSQL, set DATABASE_URL
+**Admin Models:**
+- `AdminAction` - Moderation audit log
+- `Announcement` - System announcements
 
-## Notes
-- Add shadcn/ui via `npx shadcn@latest init` if desired
-- Rate limiting and advanced RLS can be added
+**Relationships:**
+- Many-to-many: Resources ↔ Tags, Collections ↔ Resources
+- One-to-many: User → Resources, Resources → Comments/Upvotes
+- Foreign keys with cascade deletes for data integrity
+
+## 🔍 Search Implementation
+
+**Current:** Prisma `contains` with case-insensitive matching
+**Features:**
+- Full-text search across titles and descriptions
+- Tag-based filtering
+- Category filtering
+- Sorting by newest/popular
+- Multi-parameter queries
+
+**Production Optimization:**
+- Enable PostgreSQL `tsvector` + GIN indexing
+- Implement fuzzy search algorithms
+- Add search result ranking
+- Cache frequent queries
+
+## 🚀 Deployment
+
+### Frontend (Vercel/Netlify)
+```bash
+# Build command
+npm run build
+
+# Environment variables
+NEXT_PUBLIC_API_BASE_URL=https://your-api-domain.com
+```
+
+### Backend (Railway/Render/Heroku)
+```bash
+# Start command
+tsx src/index.ts
+
+# Environment variables
+PORT=4000
+DATABASE_URL=your_database_url
+JWT_SECRET=your_production_secret
+CLIST_USERNAME=your_clist_username
+CLIST_API_KEY=your_clist_api_key
+
+# Database setup
+npx prisma generate
+npx prisma db push
+npm run seed
+```
+
+### Database Options
+- **Development:** SQLite (included)
+- **Production:** PostgreSQL, MySQL, or managed database
+- **Migrations:** Automatic with Prisma
+
+## 🔧 Development Scripts
+
+```bash
+npm run dev          # Start both frontend and backend
+npm run dev:web      # Frontend only
+npm run dev:api      # Backend only
+npm run build        # Production build
+npm run typecheck    # TypeScript validation
+npm run lint         # Code linting
+npm run seed         # Populate database
+```
+
+## 📝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+---
+
+**Built with ❤️ using Next.js, Express.js, and Prisma**
