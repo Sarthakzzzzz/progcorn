@@ -88,7 +88,8 @@ Thumbs.db
 Desktop.ini
 
 # Prisma
-prisma/migrations/
+# Keep migrations/ - they should be committed
+# Remove old backup migrations
 prisma/migrations.backup/
 
 # Temporary files

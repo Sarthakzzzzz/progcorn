@@ -31,7 +31,7 @@ A full-stack web platform for discovering programming resources and tracking com
 ## 🛠 Tech Stack
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
 - **Backend**: Express.js, Node.js with TypeScript
-- **Database**: SQLite with Prisma ORM
+- **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT tokens, bcrypt hashing
 - **External APIs**: Clist API for contest data
 - **Scheduling**: node-cron for automated tasks
@@ -73,8 +73,9 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 PORT=4000
 JWT_SECRET=your_secure_jwt_secret
 
-# Database
-DATABASE_URL="file:./dev.db"
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://username:password@localhost:5432/progcorn?schema=public"
+DIRECT_URL="postgresql://username:password@localhost:5432/progcorn?schema=public"
 
 # Clist API Integration (Optional)
 CLIST_USERNAME=your_clist_username
@@ -89,10 +90,22 @@ CLIST_DISABLE_SCHEDULER=false
 npm install
 ```
 
-2. **Setup database**
+2. **Setup PostgreSQL database**
 ```bash
+# Install PostgreSQL (Ubuntu/Debian)
+sudo apt update && sudo apt install postgresql postgresql-contrib
+
+# Create database and user
+sudo -u postgres psql
+CREATE DATABASE progcorn;
+CREATE USER progcorn_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE progcorn TO progcorn_user;
+\q
+
+# Update .env with your database credentials
+# Then run migrations
 npx prisma generate
-npx prisma db push
+npx prisma migrate dev
 npm run seed
 ```
 
@@ -243,8 +256,8 @@ npm run seed
 ```
 
 ### Database Options
-- **Development:** SQLite (included)
-- **Production:** PostgreSQL, MySQL, or managed database
+- **Development:** PostgreSQL (recommended)
+- **Production:** PostgreSQL, managed database services
 - **Migrations:** Automatic with Prisma
 
 ## 🔧 Development Scripts

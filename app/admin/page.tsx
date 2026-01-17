@@ -1,4 +1,5 @@
 "use client"
+import { useCallback } from 'react'
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 
@@ -18,8 +19,11 @@ type Announcement = { id: string; title: string; url?: string | null; published:
 type Category = { id: string; name: string; slug: string }
 type Tag = { id: string; name: string; slug: string }
 
+const TABS = { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED', ANNOUNCEMENTS: 'ANNOUNCEMENTS', CATEGORIES: 'CATEGORIES', TAGS: 'TAGS' } as const
+type Tab = typeof TABS[keyof typeof TABS]
+
 export default function AdminPage() {
-  const [tab, setTab] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'ANNOUNCEMENTS' | 'CATEGORIES' | 'TAGS'>('PENDING')
+  const [tab, setTab] = useState<Tab>('PENDING')
   const [items, setItems] = useState<Resource[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -36,27 +40,30 @@ export default function AdminPage() {
   const [catDraft, setCatDraft] = useState<{ name: string; slug: string }>({ name: '', slug: '' })
   const [tagDraft, setTagDraft] = useState<{ name: string; slug: string }>({ name: '', slug: '' })
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      if (tab === 'ANNOUNCEMENTS') {
+      if (tab === TABS.ANNOUNCEMENTS) {
         const d = await api<{ announcements: Announcement[] }>(`/admin/announcements`, { auth: true })
         setAnns(d.announcements)
-      } else if (tab === 'CATEGORIES') {
+      } else if (tab === TABS.CATEGORIES) {
         const d = await api<{ categories: Category[] }>(`/admin/categories`, { auth: true })
         setCats(d.categories)
-      } else if (tab === 'TAGS') {
+      } else if (tab === TABS.TAGS) {
         const d = await api<{ tags: Tag[] }>(`/admin/tags`, { auth: true })
         setTags(d.tags)
       } else {
         const data = await api<{ resources: Resource[] }>(`/admin/resources?status=${tab}`, { auth: true })
         setItems(data.resources)
       }
-    } catch (e: any) { setError(e?.message || 'Failed to load') } finally { setLoading(false) }
-  }
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load data.')
+      setToast({ text: e?.message || 'Failed to load data.', kind: 'error' })
+    } finally { setLoading(false) }
+  }, [tab])
 
-  useEffect(() => { load() }, [tab])
+  useEffect(() => { load() }, [load])
 
   const act = async (id: string, action: 'approve' | 'reject') => {
     await api(`/admin/resource/${id}/${action}`, { method: 'POST', auth: true })
@@ -81,40 +88,64 @@ export default function AdminPage() {
 
   const addAnnouncement = async () => {
     if (!newAnn.title) return
-    await api(`/admin/announcements`, { method: 'POST', auth: true, body: JSON.stringify({ title: newAnn.title, url: newAnn.url }) })
-    setNewAnn({ title: '', url: '' })
-    setToast({ text: 'Announcement created', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/announcements`, { method: 'POST', auth: true, body: JSON.stringify({ title: newAnn.title, url: newAnn.url || null }) })
+      setNewAnn({ title: '', url: '' })
+      setToast({ text: 'Announcement created', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to create announcement', kind: 'error' })
+    }
   }
   const updateAnnouncement = async (a: Announcement) => {
-    await api(`/admin/announcements/${a.id}`, { method: 'PUT', auth: true, body: JSON.stringify({ title: a.title, url: a.url, published: a.published }) })
-    setToast({ text: 'Announcement updated', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/announcements/${a.id}`, { method: 'PUT', auth: true, body: JSON.stringify({ title: a.title, url: a.url, published: a.published }) })
+      setToast({ text: 'Announcement updated', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to update announcement', kind: 'error' })
+    }
   }
   const togglePublish = async (a: Announcement) => {
-    await api(`/admin/announcements/${a.id}`, { method: 'PUT', auth: true, body: JSON.stringify({ published: !a.published }) })
-    setToast({ text: a.published ? 'Announcement unpublished' : 'Announcement published', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/announcements/${a.id}`, { method: 'PUT', auth: true, body: JSON.stringify({ published: !a.published }) })
+      setToast({ text: a.published ? 'Announcement unpublished' : 'Announcement published', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to toggle publish status', kind: 'error' })
+    }
   }
   const deleteAnnouncement = async (id: string) => {
     if (!confirm('Delete this announcement?')) return
-    await api(`/admin/announcements/${id}`, { method: 'DELETE', auth: true })
-    setToast({ text: 'Announcement deleted', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/announcements/${id}`, { method: 'DELETE', auth: true })
+      setToast({ text: 'Announcement deleted', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to delete announcement', kind: 'error' })
+    }
   }
 
   const addCategory = async () => {
     if (!newCat.name || !newCat.slug) return
-    await api(`/admin/categories`, { method: 'POST', auth: true, body: JSON.stringify(newCat) })
-    setNewCat({ name: '', slug: '' })
-    setToast({ text: 'Category created', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/categories`, { method: 'POST', auth: true, body: JSON.stringify(newCat) })
+      setNewCat({ name: '', slug: '' })
+      setToast({ text: 'Category created', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to create category', kind: 'error' })
+    }
   }
   const deleteCategory = async (id: string) => {
     if (!confirm('Delete this category? Resources using it will fail until updated.')) return
-    await api(`/admin/categories/${id}`, { method: 'DELETE', auth: true })
-    setToast({ text: 'Category deleted', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/categories/${id}`, { method: 'DELETE', auth: true })
+      setToast({ text: 'Category deleted', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to delete category', kind: 'error' })
+    }
   }
 
   const startEditCat = (c: Category) => { setEditingCat(c.id); setCatDraft({ name: c.name, slug: c.slug }) }
@@ -130,16 +161,24 @@ export default function AdminPage() {
 
   const addTag = async () => {
     if (!newTag.name || !newTag.slug) return
-    await api(`/admin/tags`, { method: 'POST', auth: true, body: JSON.stringify(newTag) })
-    setNewTag({ name: '', slug: '' })
-    setToast({ text: 'Tag created', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/tags`, { method: 'POST', auth: true, body: JSON.stringify(newTag) })
+      setNewTag({ name: '', slug: '' })
+      setToast({ text: 'Tag created', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to create tag', kind: 'error' })
+    }
   }
   const deleteTag = async (id: string) => {
     if (!confirm('Delete this tag?')) return
-    await api(`/admin/tags/${id}`, { method: 'DELETE', auth: true })
-    setToast({ text: 'Tag deleted', kind: 'success' })
-    await load()
+    try {
+      await api(`/admin/tags/${id}`, { method: 'DELETE', auth: true })
+      setToast({ text: 'Tag deleted', kind: 'success' })
+      await load()
+    } catch (e: any) {
+      setToast({ text: e?.message || 'Failed to delete tag', kind: 'error' })
+    }
   }
   const startEditTag = (t: Tag) => { setEditingTag(t.id); setTagDraft({ name: t.name, slug: t.slug }) }
   const saveTag = async (id: string) => {
@@ -160,13 +199,13 @@ export default function AdminPage() {
       )}
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
       <div className="mb-4 flex flex-wrap gap-2">
-        {(['PENDING','APPROVED','REJECTED','ANNOUNCEMENTS','CATEGORIES','TAGS'] as const).map(s => (
+        {(Object.values(TABS)).map(s => (
           <button key={s} onClick={() => setTab(s)} className={`rounded border px-3 py-1 text-sm ${tab===s?'bg-black text-white':''}`}>{s}</button>
         ))}
       </div>
       {loading && <div className="text-sm text-gray-500">Loading...</div>}
       {error && <div className="text-sm text-red-600">{error}</div>}
-      {tab === 'PENDING' || tab === 'APPROVED' || tab === 'REJECTED' ? (
+      {tab === TABS.PENDING || tab === TABS.APPROVED || tab === TABS.REJECTED ? (
         <div className="space-y-3">
           {items.length > 0 && (
             <div className="flex items-center gap-2 mb-1">
@@ -208,7 +247,7 @@ export default function AdminPage() {
         </div>
       ) : null}
 
-      {tab === 'ANNOUNCEMENTS' && (
+      {tab === TABS.ANNOUNCEMENTS && (
         <div className="space-y-3">
           <div className="rounded border p-3 flex gap-2">
             <input placeholder="Title" className="border rounded px-2 py-1 text-sm flex-1" value={newAnn.title} onChange={(e)=>setNewAnn(a=>({...a,title:e.target.value}))} />
@@ -232,7 +271,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {tab === 'CATEGORIES' && (
+      {tab === TABS.CATEGORIES && (
         <div className="space-y-3">
           <div className="rounded border p-3 flex gap-2">
             <input placeholder="Name" className="border rounded px-2 py-1 text-sm flex-1" value={newCat.name} onChange={(e)=>setNewCat(c=>({...c,name:e.target.value}))} />
@@ -273,7 +312,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {tab === 'TAGS' && (
+      {tab === TABS.TAGS && (
         <div className="space-y-3">
           <div className="rounded border p-3 flex gap-2">
             <input placeholder="Name" className="border rounded px-2 py-1 text-sm flex-1" value={newTag.name} onChange={(e)=>setNewTag(t=>({...t,name:e.target.value}))} />
